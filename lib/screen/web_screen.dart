@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:window_manager/window_manager.dart';
@@ -19,6 +21,8 @@ class WebScreen extends StatefulWidget {
 class _WebScreenState extends State<WebScreen> {
   InAppWebViewController? controller;
   bool isFullScreen = false;
+  bool showAction = true;
+  Timer? hoverTimer;
 
   @override
   void initState() {
@@ -32,35 +36,58 @@ class _WebScreenState extends State<WebScreen> {
       body: Container(
         child: Column(
           children: [
-            Row(
-              children: [
-                TextButton(
-                  onPressed: () {
-                    isFullScreen = true;
-                    WindowManager.instance.setFullScreen(true);
-                    setState(() {});
-                  },
-                  child: Text("全屏"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    isFullScreen = false;
-                    WindowManager.instance.setFullScreen(false);
-                    setState(() {});
-                  },
-                  child: Text("退出全屏"),
-                ),
-              ],
-            ),
+            showAction
+                ? Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        isFullScreen = true;
+                        WindowManager.instance.setFullScreen(true);
+                        if (hoverTimer != null) {
+                          hoverTimer!.cancel();
+                        }
+                        hoverTimer = Timer(const Duration(seconds: 3), () {
+                          showAction = false;
+                          setState(() {});
+                        });
+                        setState(() {});
+                      },
+                      child: Text("全屏"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        isFullScreen = false;
+                        WindowManager.instance.setFullScreen(false);
+                        setState(() {});
+                      },
+                      child: Text("退出全屏"),
+                    ),
+                  ],
+                )
+                : Container(),
             Expanded(
-              child: InAppWebView(
-                initialSettings: InAppWebViewSettings(),
-                initialUrlRequest: URLRequest(
-                  url: WebUri("https://www.zhihu.com/"),
-                ),
-                onWebViewCreated: (controller) {
-                  this.controller = controller;
+              child: MouseRegion(
+                onHover: (e) {
+                  //指针在区域内移动监听,有移动时展示控制组件, n秒未移动隐藏控制组件
+                  showAction = true;
+                  if (hoverTimer != null) {
+                    hoverTimer!.cancel();
+                  }
+                  hoverTimer = Timer(const Duration(seconds: 3), () {
+                    showAction = false;
+                    setState(() {});
+                  });
+                  setState(() {});
                 },
+                child: InAppWebView(
+                  initialSettings: InAppWebViewSettings(),
+                  initialUrlRequest: URLRequest(
+                    url: WebUri("https://www.hypergryph.com/"),
+                  ),
+                  onWebViewCreated: (controller) {
+                    this.controller = controller;
+                  },
+                ),
               ),
             ),
           ],
